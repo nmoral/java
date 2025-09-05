@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-training
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: training_db
+      MYSQL_USER: training_user
+      MYSQL_PASSWORD: training_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - training-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: postgres-training
+    environment:
+      POSTGRES_DB: training_db
+      POSTGRES_USER: training_user
+      POSTGRES_PASSWORD: training_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - training-network
+    restart: unless-stopped
+
+  # phpMyAdmin pour MySQL
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-training
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: training_user
+      PMA_PASSWORD: training_password
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - training-network
+    restart: unless-stopped
+
+  # pgAdmin pour PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-training
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@training.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8082:80"
+    depends_on:
+      - postgres
+    networks:
+      - training-network
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  postgres-data:
+
+networks:
+  training-network:
+    driver: bridge

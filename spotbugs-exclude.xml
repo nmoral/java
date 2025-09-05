@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Configuration SpotBugs pour exclure certains patterns
+    dans le programme d'entraînement Java
+-->
+<FindBugsFilter>
+    <!-- Exclure les warnings sur les classes de test -->
+    <Match>
+        <Class name="~.*Test.*"/>
+    </Match>
+    
+    <!-- Exclure les warnings sur les classes de solutions -->
+    <Match>
+        <Class name="~.*solutions.*"/>
+    </Match>
+    
+    <!-- Exclure certains patterns spécifiques aux exercices -->
+    <Match>
+        <Bug pattern="DM_NUMBER_CTOR"/>
+    </Match>
+    
+    <Match>
+        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+    </Match>
+    
+    <!-- Exclure les warnings sur les System.out.println dans les exercices -->
+    <Match>
+        <Bug pattern="DM_SYSTEM_EXIT"/>
+    </Match>
+</FindBugsFilter>
