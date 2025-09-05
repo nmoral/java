@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL pour SonarQube
+  sonarqube-db:
+    image: postgres:13
+    container_name: sonarqube-db
+    environment:
+      POSTGRES_DB: sonar
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - sonarqube-db-data:/var/lib/postgresql/data
+    networks:
+      - sonarqube-network
+    restart: unless-stopped
+
+  # SonarQube
+  sonarqube:
+    image: sonarqube:9.9-community
+    container_name: sonarqube
+    depends_on:
+      - sonarqube-db
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    ports:
+      - "9000:9000"
+    networks:
+      - sonarqube-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jenkins pour l'intégration continue
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+    networks:
+      - sonarqube-network
+    restart: unless-stopped
+
+volumes:
+  sonarqube-db-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:
+  jenkins-data:
+
+networks:
+  sonarqube-network:
+    driver: bridge

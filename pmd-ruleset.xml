@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!--
+    Configuration PMD pour le programme d'entraînement Java
+    Règles adaptées pour l'apprentissage
+-->
+<ruleset name="Java Training Ruleset"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>Règles PMD pour le programme d'entraînement Java</description>
+
+    <!-- Règles de bonnes pratiques -->
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Exclure certaines règles trop strictes pour l'apprentissage -->
+        <exclude name="AvoidReassigningParameters"/>
+        <exclude name="JUnitTestContainsTooManyAsserts"/>
+    </rule>
+
+    <!-- Règles de style de code -->
+    <rule ref="category/java/codestyle.xml">
+        <!-- Exclure certaines règles de style pour l'apprentissage -->
+        <exclude name="ShortVariable"/>
+        <exclude name="LongVariable"/>
+    </rule>
+
+    <!-- Règles de design -->
+    <rule ref="category/java/design.xml">
+        <!-- Exclure certaines règles de design pour l'apprentissage -->
+        <exclude name="TooManyMethods"/>
+        <exclude name="TooManyFields"/>
+    </rule>
+
+    <!-- Règles de détection d'erreurs -->
+    <rule ref="category/java/errorprone.xml">
+        <!-- Garder toutes les règles de détection d'erreurs -->
+    </rule>
+
+    <!-- Règles de performance -->
+    <rule ref="category/java/performance.xml">
+        <!-- Exclure certaines règles de performance pour l'apprentissage -->
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+    </rule>
+
+    <!-- Règles personnalisées pour l'apprentissage -->
+    <rule ref="category/java/bestpractices.xml/UnusedImports"/>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
+    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
+
+</ruleset>
