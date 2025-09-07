@@ -21,7 +21,7 @@ fi
 
 # Compiler le projet
 echo "🔨 Compilation du projet..."
-mvn compile -q
+mvn compile -q -Dcheckstyle.skip=true -Dspotbugs.skip=true -Dpmd.skip=true
 
 if [ $? -ne 0 ]; then
     echo "❌ Erreur de compilation. Vérifiez votre code."
@@ -41,26 +41,51 @@ test_challenge() {
     echo "🧪 Test du défi: $description"
     echo "----------------------------------------"
     
-    # Vérifier que le fichier existe
-    if [ ! -f "solutions/$class.java" ]; then
-        echo "❌ Fichier solutions/$class.java non trouvé"
-        echo "   Créez votre solution dans le dossier solutions/"
+    # Vérifier que le fichier existe dans src/main/java
+    local src_file="src/main/java/com/java/training/solutions/$class.java"
+    local solutions_file="solutions/$class.java"
+    
+    if [ ! -f "$src_file" ] && [ ! -f "$solutions_file" ]; then
+        echo "❌ Fichier $class.java non trouvé"
+        echo "   Créez votre solution dans:"
+        echo "   • src/main/java/com/java/training/solutions/$class.java (recommandé)"
+        echo "   • ou solutions/$class.java (legacy)"
         echo ""
         return 1
     fi
     
-    # Compiler la solution
-    echo "🔨 Compilation de la solution..."
-    javac -cp "target/classes" "solutions/$class.java"
+    # Si le fichier existe dans solutions/, le copier vers src/
+    if [ -f "$solutions_file" ] && [ ! -f "$src_file" ]; then
+        echo "📁 Copie du fichier depuis solutions/ vers src/..."
+        mkdir -p "src/main/java/com/java/training/solutions"
+        cp "$solutions_file" "$src_file"
+        
+        # Ajouter le package au début du fichier s'il n'existe pas
+        if ! grep -q "package com.java.training.solutions;" "$src_file"; then
+            sed -i '1i package com.java.training.solutions;\n' "$src_file"
+        fi
+        
+        # Rendre la classe publique si elle ne l'est pas
+        sed -i 's/^class /public class /' "$src_file"
+        
+        # Rendre les méthodes publiques si elles sont privées
+        sed -i 's/private void /public void /' "$src_file"
+        
+        echo "✅ Fichier copié et adapté pour Maven"
+    fi
+    
+    # Compiler avec Maven
+    echo "🔨 Compilation avec Maven..."
+    mvn compile -q -Dcheckstyle.skip=true -Dspotbugs.skip=true -Dpmd.skip=true
     
     if [ $? -ne 0 ]; then
-        echo "❌ Erreur de compilation de la solution"
-        echo "   Vérifiez votre code dans solutions/$class.java"
+        echo "❌ Erreur de compilation Maven"
+        echo "   Vérifiez votre code dans $src_file"
         echo ""
         return 1
     fi
     
-    echo "✅ Compilation de la solution réussie!"
+    echo "✅ Compilation Maven réussie!"
     echo ""
     
     # Exécuter la solution
@@ -68,7 +93,9 @@ test_challenge() {
     echo "   (Appuyez sur Ctrl+C pour arrêter)"
     echo ""
     
-    java -cp "target/classes:solutions" "$class"
+    # Générer le classpath avec toutes les dépendances
+    CLASSPATH=$(mvn dependency:build-classpath -Dmdep.outputFile=/dev/stdout -q)
+    java -cp "target/classes:$CLASSPATH" "com.java.training.solutions.$class"
     
     echo ""
     echo "✅ Test terminé pour $description"

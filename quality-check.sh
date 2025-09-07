@@ -79,24 +79,42 @@ validate_challenge() {
     print_status "INFO" "Validation de qualité pour: $description"
     echo "=========================================="
     
-    # Vérifier que le fichier existe
-    if [ ! -f "solutions/$class.java" ]; then
-        print_status "ERROR" "Fichier solutions/$class.java non trouvé"
-        print_status "INFO" "Créez votre solution dans le dossier solutions/"
+    # Vérifier que le fichier existe dans src/main/java
+    local src_file="src/main/java/com/java/training/solutions/$class.java"
+    local solutions_file="solutions/$class.java"
+    
+    if [ ! -f "$src_file" ] && [ ! -f "$solutions_file" ]; then
+        print_status "ERROR" "Fichier $class.java non trouvé"
+        print_status "INFO" "Créez votre solution dans:"
+        print_status "INFO" "• src/main/java/com/java/training/solutions/$class.java (recommandé)"
+        print_status "INFO" "• ou solutions/$class.java (legacy)"
         return 1
     fi
     
-    # Compiler le projet
-    print_status "INFO" "Compilation du projet..."
+    # Si le fichier existe dans solutions/, le copier vers src/
+    if [ -f "$solutions_file" ] && [ ! -f "$src_file" ]; then
+        print_status "INFO" "Copie du fichier depuis solutions/ vers src/..."
+        mkdir -p "src/main/java/com/java/training/solutions"
+        cp "$solutions_file" "$src_file"
+        
+        # Ajouter le package au début du fichier s'il n'existe pas
+        if ! grep -q "package com.java.training.solutions;" "$src_file"; then
+            sed -i '1i package com.java.training.solutions;\n' "$src_file"
+        fi
+        
+        # Rendre la classe publique si elle ne l'est pas
+        sed -i 's/^class /public class /' "$src_file"
+        
+        # Rendre les méthodes publiques si elles sont privées
+        sed -i 's/private void /public void /' "$src_file"
+        
+        print_status "SUCCESS" "Fichier copié et adapté pour Maven"
+    fi
+    
+    # Compiler le projet avec Maven
+    print_status "INFO" "Compilation du projet avec Maven..."
     if ! mvn compile -q; then
-        print_status "ERROR" "Erreur de compilation"
-        return 1
-    fi
-    
-    # Compiler la solution
-    print_status "INFO" "Compilation de la solution..."
-    if ! javac -cp "target/classes" "solutions/$class.java"; then
-        print_status "ERROR" "Erreur de compilation de la solution"
+        print_status "ERROR" "Erreur de compilation Maven"
         return 1
     fi
     
